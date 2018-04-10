@@ -24,4 +24,12 @@ the commands are pretty straight forward:
  - `/country ${countryName}` will list all newspapers in that country
  - `/get ${zone}/${countryName}` will send you all newspapers from a country
    neatly packed as 10 units albums
-  - `/get ${zone}/${countryName}/${newspaper` will send you the cover of the day
+  - `/get ${zone}/${countryName}/${newspaper` will send you the cover of the
+    day
+    
+Screenshots, everybody likes screenshots
+===
+
+![Querying Zones](./docs/screenshots/1.png "/zones command")
+![Querying Countries](./docs/screenshots/2.png "/countries command")
+![Querying A specific newspaper](./docs/screenshots/3.png "/search command")
