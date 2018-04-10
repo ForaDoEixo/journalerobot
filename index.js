@@ -254,9 +254,14 @@ bot.getMe().then(({first_name, username}) => {
     Object.keys(handlers).forEach(k => {
         debug('instaling handler for:', k)
 
-        bot.onText(new RegExp(`\/${k} ?(.*)`), handlers[k])
-        bot.onText(new RegExp(`\/@?${first_name} ${k} ?(.*)`), handlers[k])
-        bot.onText(new RegExp(`\/@?${username} ${k} ?(.*)`), handlers[k])
+        bot.onText(new RegExp(`^\/${k}$`), handlers[k])
+        bot.onText(new RegExp(`^\/${k} (.*)`), handlers[k])
+
+        bot.onText(new RegExp(`^\/${k}@${username}$`), handlers[k])
+        bot.onText(new RegExp(`^\/${k}@${username} (.*)`), handlers[k])
+
+        bot.onText(new RegExp(`^\/@?${first_name} ${k} ?(.*)`), handlers[k])
+        bot.onText(new RegExp(`^\/@?${username} ${k} ?(.*)`), handlers[k])
     })
 })
 
