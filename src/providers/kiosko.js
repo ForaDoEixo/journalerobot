@@ -1,26 +1,21 @@
 const axios = require('axios')
-const fs = require('fs')
 const $ = require('cheerio')
-const debug = require('debug')('tapa-bot-get-zones')
+const moment = require('moment')
+const debug = require('debug')('tapa-bot:plugin:kiosko')
+
+const Provider = require('../provider')
 
 const {debugPromise} = require('../utils')
 
 let newspaperCache = {}
 let countryCache = {}
 
-function parseImgURL(url) {
-    return url.match(new RegExp(`${IMG_BASE_URL}/${IMG_DATE_REGEXP}/(.*)`))
-}
-
-function imgURLisToday(url) {
-    let [, y, m, d] = parseImgURL(url)
-
-    let nm = moment(`${y}${m}${d}`)
-    return nm.format('YYYY/MM/DD') === moment().format('YYYY/MM/DD')
-}
-
-module.exports = class KioskoProvider {
+module.exports = class KioskoProvider extends Provider{
     constructor(config) {
+        super(config)
+
+        debug("im live")
+
         this.config = Object.assign({
             BASE_URL: 'http://kiosko.net',
             IMG_BASE_URL: 'http://img.kiosko.net',
@@ -28,8 +23,19 @@ module.exports = class KioskoProvider {
         }, config)
         this.name = 'Kiosko'
         this.description = 'kiosko.net provider for TapaBot'
-
     }
+
+    parseImgURL(url) {
+        return url.match(new RegExp(`${this.config.IMG_BASE_URL}/${this.config.IMG_DATE_REGEXP}/(.*)`))
+    }
+
+    imgURLisToday(url) {
+        let [, y, m, d] = this.parseImgURL(url)
+
+        let nm = moment(`${y}${m}${d}`)
+        return nm.format('YYYY/MM/DD') === moment().format('YYYY/MM/DD')
+    }
+
 
     fetch() {
         let {BASE_URL} = this.config
@@ -77,9 +83,8 @@ module.exports = class KioskoProvider {
                                                 })
                                                 .then(newspapers => (Object.assign(countries, {
                                                     [`${countryName}`]: {
-                                                        url: countryURL,
                                                         name: countryName,
-                                                        newspapers: newspapers
+                                                        newspapers: Object.keys(newspapers)
                                                     }
                                                 })))
                                 })
@@ -91,9 +96,8 @@ module.exports = class KioskoProvider {
 
                                                   return Object.assign(zones, {
                                                       [`${zoneName}`]: {
-                                                          url: zone,
                                                           name: zoneName,
-                                                          countries: countries
+                                                          countries: Object.keys(countries)
                                                       }
                                                   })
                                               })
@@ -109,6 +113,34 @@ module.exports = class KioskoProvider {
                         countries: countryCache,
                         newspapers: newspaperCache
                     }))
+                    .then(debugPromise('done'))
+    }
+
+    filterToday(newspapers) {
+        debug('filterToday', newspapers, this.newspapers)
+
+        let filtred = newspapers.map(n => this.newspapers[n])
+                                .filter(n => n && this.imgURLisToday(n.high))
+                                .map(n => ({[n.name]: n}))
+
+        debug ('filtred', filtred, Object.assign.apply(this, filtred))
+
+        return Object.assign.apply(this, filtred)
+    }
+
+    get10Days(newspaper) {
+        let [, y, m, d, highUrl] = parseImgURL(newspaper.high)
+
+        let ret = {}
+        let nm = moment(`${y}${m}${d}`)
+
+        for (let i = 0; i < 10; i += 1) {
+            let dt = nm.format('YYYY/MM/DD')
+            ret[`${newspaper.name} (${dt})`] = {high: `${IMG_BASE_URL}/${dt}/${highUrl}`}
+            nm.subtract(1, 'days')
+        }
+
+        return ret
     }
 }
 

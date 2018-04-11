@@ -17,16 +17,28 @@ let promiseWriteFile = (file, data) => (
 
 getProviders(config)
     .then(providers => {
-        promises = Object.values(providers).map(p => p.fetch())
+        promises = Object.values(providers).map(
+            p => (
+                p.fetch()
+                 .then(({newspapers, ...rest}) => ({
+                     ...rest,
+                     newspapers: Object.values(newspapers)
+                                       .reduce((a, c) => (
+                                           Object.assign(a, {
+                                               [c.name] : {
+                                                   provider: p.name,
+                                                   ...c
+                                               }
+                                           })), {})
+                 }))
+            ))
 
         return Promise
             .all(promises)
-            .then(debugPromise('before'))
             .then(results => (
                 results.reduce((a, c) => (
                     deepAssign(a, c)
-                ), {})
-            )).then(debugPromise('after'))
+                ), {})))
             .then(({zones, countries, newspapers}) => (
                 Promise.all([
                     promiseWriteFile(FILES.ZONES, zones),

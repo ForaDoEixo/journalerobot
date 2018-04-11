@@ -1,7 +1,7 @@
 {
   "name": "telegram-newspaper-cover-bot",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node index.js",
     "build": "node src/update.js",
     "lint": "eslint *.js"
   },

@@ -1,6 +1,7 @@
 let DATA_PATH=`${__dirname}/..`
 
 module.exports = {
+    GROUP_MAX_ENTRIES: 10,
     DATA_PATH,
     FILES: {
         ZONES: `${DATA_PATH}/zones.json`,

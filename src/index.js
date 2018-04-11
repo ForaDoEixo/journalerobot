@@ -1,248 +1,261 @@
 const auth = require('../../auth');
 const TelegramBot = require('node-telegram-bot-api');
 const chokidar = require('chokidar');
-const moment = require('moment');
+
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search');
-const {inlineRowsKeyboard} = require('./utils')
+const {inlineRowsKeyboard, getProviders} = require('./utils')
 
-const {IMG_BASE_URL, IMG_DATE_REGEXP, FILES} = require('./config')
+const {FILES, GROUP_MAX_ENTRIES} = require('./config')
 
-const watcher = chokidar.watch(Object.values(FILES), {
-    persistent: true
-});
+Array.prototype.reduceIn = (a, h) => (
+    a.reduce((a, k) => (
+        Object.assign(a, h[k])
+    ), {})
+)
 
-// replace the value below with the Telegram token you receive from @BotFather
-const token = auth.API_KEY;
+class TapaBot {
+    constructor () {
+        this.handlers = {
+            'zones':     this.doGetZones.bind(this),
+            'countries': this.doGetCountries.bind(this),
+            'start':     this.doStart.bind(this),
+            'getCountry':this.doGetAllForCountry.bind(this),
+            'getNewspaper':       this.doGet10Days.bind(this),
+            'search':    this.doSearch.bind(this)
+        }
 
-let zones = require(FILES.ZONES)
-let zonesFuzzy = new FuzzySearch(zones, {}, (msg, z) => (
-    getCountries(msg, z.name)
-))
+        let runOnAllProviders = (methodName) => (
+            (arg) => (Object.values(this.providers).reduce((a, p) => (
+                Object.assign(a, p[methodName](arg))
+            ), {}))
+        )
 
-let countries = require(FILES.COUNTRIES)
-let countriesFuzzy = new FuzzySearch(countries, {}, (msg, c) => {
-    const chatId = msg.chat.id
+        this.run = ['get', 'load', 'get10Days', 'filterToday'].reduce((a, methodName) => (
+            Object.assign(a, {
+                [methodName] : runOnAllProviders(methodName)
+            })
+        ), {})
+    }
+    init() {
+        this.watcher = chokidar.watch(Object.values(FILES), {
+            persistent: true
+        });
 
-    let newspapers = filterToday(c.newspapers)
+        // replace the value below with the Telegram token you receive from @BotFather
+        this.token = auth.API_KEY;
 
-    return sendNewsPapers(chatId, c.name, newspapers)
-})
+        this.zones = require(FILES.ZONES)
+        this.zonesFuzzy = new FuzzySearch(this.zones)
 
-let newspapers = require(FILES.NEWSPAPERS)
-let newspapersFuzzy = new FuzzySearch(newspapers, {maxDistance: 0.0001}, (msg, n) => {
-    const chatId = msg.chat.id
+        this.countries = require(FILES.COUNTRIES)
+        this.countriesFuzzy = new FuzzySearch(this.countries)
 
-    let newspapers = get10Days(n)
+        let newspapers = require(FILES.NEWSPAPERS)
+        this.newspapersFuzzy = new FuzzySearch(newspapers, {maxDistance: 0.0001})
+        this.run.load(newspapers)
 
-    return sendNewsPapers(chatId, 'UNSUPPORTED', newspapers)
-})
+        this.watcher.on('change', this.reload.bind(this))
+    }
 
-function reload(path) {
-    debug(`reloading everything because ${path} changed`)
+    getProviderForNewsPaper(newspaper) {
+        return this.providers[newspaper].provider
+    }
 
-    zones = require(FILES.ZONES)
-    zonesFuzzy.load(zones)
+    reload(path) {
+        debug(`reloading everything because ${path} changed`)
 
-    countries = require(FILES.COUNTRIES)
-    countriesFuzzy.load(countries)
+        this.zones = require(FILES.ZONES)
+        this.zonesFuzzy.load(this.zones)
 
-    newspapers = require(FILES.NEWSPAPERS)
-    newspapersFuzzy.load(newspapers)
-}
+        this.countries = require(FILES.COUNTRIES)
+        this.countriesFuzzy.load(this.countries)
 
-watcher.on('change', reload)
+        let newspapers = require(FILES.NEWSPAPERS)
+        this.newspapersFuzzy.load(newspapers)
+        this.run.load(newspapers)
+    }
 
-function usage() {
-    return `
-/get Zone/Country[/newspaper]
+    start() {
+        return getProviders()
+            .then((providers) => {
+                this.providers = providers
+            })
+            .then(this.init.bind(this))
+            .then(this.startBot.bind(this))
+    }
+
+    startBot() {
+        // Create a bot that uses 'polling' to fetch new updates
+        this.bot = new TelegramBot(this.token, {polling: true});
+
+        this.bot.on('callback_query', (cbq) => {
+            const [, action, args] = cbq.data.match(/(\w+) ?(.*)/)
+            const msg = cbq.message;
+            const opts = {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id
+            };
+
+            this.handlers[action](msg, [null, args])
+            this.bot.editMessageText(`${action} → ${args}`, opts);
+        })
+
+
+        this.bot.getMe().then(({first_name, username}) => {
+            let handlers = this.handlers
+            let meRegExps = [
+                new RegExp(`${first_name} (\w+) ?(.*)`),
+                new RegExp(`${username} (\w+) ?(.*)`)
+            ]
+
+            this.bot.on('message', (msg) => {
+                const chatId = msg.chat.id;
+
+                meRegExps.forEach(r => {
+                    if (msg.text.match(r)) {
+                        this.bot.sendMessage(chatId, 'yes please')
+                    }
+                })
+
+                debug('got', msg)
+            })
+
+            Object.keys(handlers).forEach(k => {
+                debug('instaling handler for:', k)
+
+                this.bot.onText(new RegExp(`^\/${k}$`), handlers[k])
+                this.bot.onText(new RegExp(`^\/${k} (.*)`), handlers[k])
+
+                this.bot.onText(new RegExp(`^\/${k}@${username}$`), handlers[k])
+                this.bot.onText(new RegExp(`^\/${k}@${username} (.*)`), handlers[k])
+
+                this.bot.onText(new RegExp(`^\/@?${first_name} ${k} ?(.*)`), handlers[k])
+                this.bot.onText(new RegExp(`^\/@?${username} ${k} ?(.*)`), handlers[k])
+            })
+        })
+
+
+    }
+
+    usage() {
+        return `
+/search
 /zones
 /countries Zone
 /newspapers Zone/Country
 `
-}
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
-
-function getZones(msg) {
-    const chatId = msg.chat.id;
-    let user = msg.from.first_name
-
-    let keyboard = inlineRowsKeyboard(Object.keys(zones), (z) => (`countries ${z}`))
-
-    bot.sendMessage(chatId, `Ok ${user}, choose a zone`, keyboard);
-}
-
-function getCountries(msg, match) {
-    let zone = match[1]
-
-    const chatId = msg.chat.id;
-    let user = msg.from.first_name
-    let res = zones[zone].countries
-
-    let keyboard = inlineRowsKeyboard(Object.keys(res), (c) => (`get ${zone}/${c}`))
-
-    bot.sendMessage(chatId, `Ok ${user}, choose a country`, keyboard);
-}
-
-function start(msg) {
-    getZones(msg)
-}
-
-function sendNewsPapers(chatId, country, entries)  {
-    let i = 0
-    do {
-        debug('entries', entries)
-        bot.sendMediaGroup(chatId, entries.splice(i, i+10).map((e) => {
-            let [k, v] = e
-
-            return {
-                type: 'photo',
-                media: v.high,
-                caption: `${country}: ${k}`
-            }
-        }))
-        i +=10
-    } while (i < entries.length);
-}
-
-function parseImgURL(url) {
-    return url.match(new RegExp(`${IMG_BASE_URL}/${IMG_DATE_REGEXP}/(.*)`))
-}
-
-function imgURLisToday(url) {
-    let [, y, m, d] = parseImgURL(url)
-
-    let nm = moment(`${y}${m}${d}`)
-    return nm.format('YYYY/MM/DD') === moment().format('YYYY/MM/DD')
-}
-
-function get10Days(cover) {
-    let [, y, m, d, highUrl] = parseImgURL(cover.high)
-
-    let ret = {}
-    let nm = moment(`${y}${m}${d}`)
-
-    for (let i = 0; i < 10; i += 1) {
-        let dt = nm.format('YYYY/MM/DD')
-        ret[`${cover.name} (${dt})`] = {high: `${IMG_BASE_URL}/${dt}/${highUrl}`}
-        nm.subtract(1, 'days')
     }
 
-    return Object.entries(ret)
-}
+    doGetZones(msg) {
+        const chatId = msg.chat.id;
+        let user = msg.from.first_name
 
-function filterToday(newspapers) {
-    let entries = Object.entries(newspapers)
-    return entries.filter(e => imgURLisToday(e[1].high))
-}
+        let keyboard = inlineRowsKeyboard(Object.keys(this.zones), (z) => (`countries ${z}`))
 
-function getCovers(msg, match) {
-    let [zone, country, newspaper] = match[1].split('/')
-    let userName = msg.from.first_name
-
-    const chatId = msg.chat.id;
-
-    if (! zone) {
-        bot.sendMessage(chatId, `hey ${userName}, i need a zone baby`)
-        return bot.sendMessage(chatId, usage())
+        this.bot.sendMessage(chatId, `Ok ${user}, choose a zone`, keyboard);
     }
 
-    if (! country) {
-        bot.sendMessage(chatId,  `hey ${userName}, i need a zone baby`)
-        return bot.sendMessage(chatId, usage())
+    doGetCountries(msg, match) {
+        this.zonesFuzzy.search(match[1])
+            .then(zone => {
+                const chatId = msg.chat.id;
+                let user = msg.from.first_name
+
+                debug (zone)
+                let keyboard = inlineRowsKeyboard(
+                    zone.countries, (c) => (`getCountry ${c}`))
+
+                return this.bot.sendMessage(
+                    chatId, `Ok ${user}, choose a country`, keyboard);
+            })
     }
 
-    if (! zones[zone]) {
-        bot.sendMessage(chatId, 'wrong zone, try again')
-        return bot.sendMessage(chatId, usage())
+    doStart(msg) {
+        this.doGetZones(msg)
     }
 
-    let countries = zones[zone].countries
-
-    if (! country || ! countries[country]) {
-        bot.sendMessage(chatId, 'wrong country, try again')
-        return bot.sendMessage(chatId, usage())
+    sendNewsPapers(chatId, country, newspapers)  {
+        debug('here', newspapers)
+        let values = Object.values(newspapers)
+        let i = 0
+        do {
+            debug('entries', values)
+            this.bot.sendMediaGroup(chatId, values.splice(i, i + GROUP_MAX_ENTRIES).map((v) => {
+                return {
+                    type: 'photo',
+                    media: v.high,
+                    caption: `${country}: ${v.name}`
+                }
+            }))
+            i += GROUP_MAX_ENTRIES
+        } while (i < values.length);
     }
 
-    let newspapers = newspaper && countries[country].newspapers[newspaper]
-                   ? get10Days(countries[country].newspapers[newspaper])
-                   : filterToday(countries[country].newspapers)
+    doGetAllForCountry(msg, match) {
+        let [,term] = match
+        let userName = msg.from.first_name
 
-    return sendNewsPapers(chatId, country, newspapers)
-}
-
-function search (msg, match) {
-    const [, term] = match
-
-    const chatId = msg.chat.id
-
-    debug('search', term)
-    newspapersFuzzy.search(term, msg)
-                   .catch(e => countriesFuzzy
-                           .search(term, msg)
-                           .catch(e => zonesFuzzy
-                                   .search(term, msg)
-                                   .catch(e => {
-                                       let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
-                                       debug(msg)
-                                       bot.sendMessage(chatId, msg)
-                                   })))
-                   .then((r) => debug(r))
-}
-
-const handlers = {
-    'zones': getZones,
-    'countries': getCountries,
-    'start': start,
-    'get': getCovers,
-    'search': search
-}
-
-bot.on('callback_query', (cbq) => {
-    const [, action, args] = cbq.data.match(/(\w+) ?(.*)/)
-    const msg = cbq.message;
-    const opts = {
-        chat_id: msg.chat.id,
-        message_id: msg.message_id
-    };
-
-    handlers[action](msg, [null, args])
-    bot.editMessageText(`${action} → ${args}`, opts);
-})
-
-
-bot.getMe().then(({first_name, username}) => {
-    let meRegExps = [
-        new RegExp(`${first_name} (\w+) ?(.*)`),
-        new RegExp(`${username} (\w+) ?(.*)`)
-    ]
-
-    bot.on('message', (msg) => {
         const chatId = msg.chat.id;
 
-        meRegExps.forEach(r => {
-            if (msg.text.match(r)) {
-                bot.sendMessage(chatId, 'yes please')
-            }
-        })
+        if (! term) {
+            this.bot.sendMessage(chatId,  `hey ${userName}, i need a term`)
+            return this.bot.sendMessage(chatId, this.usage())
+        }
 
-        debug('got', msg)
-    })
+        this.countriesFuzzy.search(term)
+            //.then(debugPromise('countryFuzzy'))
+            .then(country => (
+                this.sendNewsPapers(chatId, country.name,
+                                    this.run.filterToday(country.newspapers))
+            ))
+            .catch(e => {
+                debug(e)
+                this.bot.sendMessage(chatId, 'wrong country, try again')
+                return this.bot.sendMessage(chatId, this.usage())
+            })
+    }
 
-    Object.keys(handlers).forEach(k => {
-        debug('instaling handler for:', k)
+    doGet10Days(msg, match) {
+        let [newspaperKey] = match[1].split('/')
+        let userName = msg.from.first_name
 
-        bot.onText(new RegExp(`^\/${k}$`), handlers[k])
-        bot.onText(new RegExp(`^\/${k} (.*)`), handlers[k])
+        const chatId = msg.chat.id;
 
-        bot.onText(new RegExp(`^\/${k}@${username}$`), handlers[k])
-        bot.onText(new RegExp(`^\/${k}@${username} (.*)`), handlers[k])
+        return this.sendNewsPapers(chatId, country, this.run.get10Days(newspaperKey))
+    }
 
-        bot.onText(new RegExp(`^\/@?${first_name} ${k} ?(.*)`), handlers[k])
-        bot.onText(new RegExp(`^\/@?${username} ${k} ?(.*)`), handlers[k])
-    })
-})
+    doSearch (msg, match) {
+        const [, term] = match
 
+        const chatId = msg.chat.id
+
+        debug('search', term)
+        this.newspapersFuzzy.search(term)
+                          .then((z) => (
+                              getCountries(msg, z.name)
+                          ))
+                          .catch(e => (
+                              this.countriesFuzzy
+                                  .search(term)
+                                  .then((c) => (
+                                      this.sendNewsPapers(chatId, c.name,
+                                                          this.run.filterToday(c.newspapers))))
+                                  .catch(e => (
+                                      this.zonesFuzzy
+                                          .search(term)
+                                          .then((n) => (
+                                              this.sendNewsPapers(chatId, 'UNSUPPORTED',
+                                                                  this.run.get10Days(n))))
+                                          .catch(e => {
+                                              let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
+                                              debug(msg, e)
+                                              return this.bot.sendMessage(chatId, msg)
+                                          })
+                                  ))
+                          )).then(debugPromise('search'))
+    }
+}
+
+module.exports = TapaBot

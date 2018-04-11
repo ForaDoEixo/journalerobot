@@ -24,13 +24,14 @@ class fuzzySearch {
         return stringMap
     }
 
-    search(term, data) {
+    search(term) {
         term = term.replace(/\s+/g, '_')
         let res = this.stringMap.search(term)
         if (!res) {
             return Promise.reject(new Error('not found'))
         }
 
+        debug('search', res)
         if (res[0].distance > this.opts.maxDistance) {
             return Promise.reject(new Error('found with bad distance'))
         }
@@ -38,7 +39,6 @@ class fuzzySearch {
         let k = res[0].value.replace(/_/g, ' ')
         debug('search', term, res, this.items[k])
         return Promise.resolve(this.items[k])
-                      .then(this.resolve.bind(this, data))
     }
 }
 
