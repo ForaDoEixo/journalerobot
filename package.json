@@ -1,8 +1,8 @@
 {
   "name": "telegram-newspaper-cover-bot",
   "scripts": {
-    "start": "node index.js",
-    "build": "node get-zones.js",
+    "start": "node src/index.js",
+    "build": "node src/update.js",
     "lint": "eslint *.js"
   },
   "version": "0.0.1",

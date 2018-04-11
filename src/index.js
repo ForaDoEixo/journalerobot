@@ -1,10 +1,11 @@
-const auth = require('../auth');
+const auth = require('../../auth');
 const TelegramBot = require('node-telegram-bot-api');
 const chokidar = require('chokidar');
 const moment = require('moment');
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search');
+const {inlineRowsKeyboard} = require('./utils')
 
 const {IMG_BASE_URL, IMG_DATE_REGEXP, FILES} = require('./config')
 
@@ -64,26 +65,6 @@ function usage() {
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
-
-function makeRowsKeyboard(keys, transform, rows = 3) {
-    let keyboard = []
-    while (keys.length) {
-        keyboard.push(keys.splice(0, rows).map((k) => ({
-            text: k,
-            callback_data: transform(k)
-        })))
-    }
-
-    return keyboard
-}
-
-function inlineRowsKeyboard(keys, transform, rows) {
-    return {
-        "reply_markup": {
-            "inline_keyboard": makeRowsKeyboard(keys, transform, rows)
-        }
-    }
-}
 
 function getZones(msg) {
     const chatId = msg.chat.id;
