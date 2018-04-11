@@ -1,9 +1,8 @@
 const fs = require('fs')
-const glob = require('glob')
 const deepAssign = require('deep-assign')
 const debug = require('debug')('tapa-bot:update')
 
-const {debugPromise} = require('./utils')
+const {debugPromise, getProviders} = require('./utils')
 
 const config = require('./config')
 const {FILES} = config
@@ -16,30 +15,26 @@ let promiseWriteFile = (file, data) => (
     ))
 )
 
-glob(`${__dirname}/providers/*.js`, (err, files) => {
-    let promises = files.map(f => {
-        let p = require(require.resolve(f))
-        let P = new p(config)
+getProviders(config)
+    .then(providers => {
+        promises = Object.values(providers).map(p => p.fetch())
 
-        debug(f, P.name, P.description)
-
-        return P.fetch()
+        return Promise
+            .all(promises)
+            .then(debugPromise('before'))
+            .then(results => (
+                results.reduce((a, c) => (
+                    deepAssign(a, c)
+                ), {})
+            )).then(debugPromise('after'))
+            .then(({zones, countries, newspapers}) => (
+                Promise.all([
+                    promiseWriteFile(FILES.ZONES, zones),
+                    promiseWriteFile(FILES.COUNTRIES, countries),
+                    promiseWriteFile(FILES.NEWSPAPERS, newspapers)
+                ])))
+            .catch(err => debug('GOT ERROR', err))
+            .then(debugPromise('all done'))
     })
 
-    Promise.all(promises)
-                        .then(debugPromise('before'))
-                        .then(results => (
-                            results.reduce((a, c) => (
-                                deepAssign(a, c)
-                            ), {})
-                        )).then(debugPromise('after'))
-                        .then(({zones, countries, newspapers}) => (
-                            Promise.all([
-                                promiseWriteFile(FILES.ZONES, zones),
-                                promiseWriteFile(FILES.COUNTRIES, countries),
-                                promiseWriteFile(FILES.NEWSPAPERS, newspapers)
-                            ])))
-                        .catch(err => debug('GOT ERROR', err))
-                        .then(debugPromise('all done'))
-})
 
