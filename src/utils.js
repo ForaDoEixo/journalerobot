@@ -1,3 +1,5 @@
+const debug = require('debug')('tapa-bot:utils')
+
 function makeRowsKeyboard(keys, transform, rows = 3) {
     let keyboard = []
     while (keys.length) {
@@ -18,6 +20,11 @@ function inlineRowsKeyboard(keys, transform, rows) {
     }
 }
 
+let debugPromise = (name) => ((args) =>{
+    debug('DEBUG:', name,  args)
+    return args
+})
 module.exports = {
-    inlineRowsKeyboard
+    inlineRowsKeyboard,
+    debugPromise
 }

@@ -1,4 +1,4 @@
-let DATA_PATH='../'
+let DATA_PATH=`${__dirname}/..`
 
 module.exports = {
     BASE_URL: 'http://kiosko.net',
