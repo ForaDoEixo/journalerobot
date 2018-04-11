@@ -8,11 +8,27 @@ const {debugPromise} = require('../utils')
 let newspaperCache = {}
 let countryCache = {}
 
+function parseImgURL(url) {
+    return url.match(new RegExp(`${IMG_BASE_URL}/${IMG_DATE_REGEXP}/(.*)`))
+}
+
+function imgURLisToday(url) {
+    let [, y, m, d] = parseImgURL(url)
+
+    let nm = moment(`${y}${m}${d}`)
+    return nm.format('YYYY/MM/DD') === moment().format('YYYY/MM/DD')
+}
+
 module.exports = class KioskoProvider {
     constructor(config) {
-        this.config = config
+        this.config = Object.assign({
+            BASE_URL: 'http://kiosko.net',
+            IMG_BASE_URL: 'http://img.kiosko.net',
+            IMG_DATE_REGEXP: '([0-9]+)/([0-9]+)/([0-9]+)'
+        }, config)
         this.name = 'Kiosko'
         this.description = 'kiosko.net provider for TapaBot'
+
     }
 
     fetch() {
