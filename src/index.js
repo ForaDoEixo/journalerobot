@@ -21,14 +21,14 @@ class TapaBot {
       'search': this.doSearch.bind(this)
     }
 
-    let runOnAllProviders = (methodName) =>
+    let reduceOnAllProviders = (methodName) =>
       (arg) => (Object.values(this.providers).reduce((a, p) => (
         Object.assign(a, p[methodName](arg))
       ), {}))
 
     this.run = ['get', 'load', 'get10Days', 'filterToday'].reduce((a, methodName) => (
       Object.assign(a, {
-        [methodName]: runOnAllProviders(methodName)
+        [methodName]: reduceOnAllProviders(methodName)
       })
     ), {})
   }
