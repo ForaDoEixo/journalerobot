@@ -21,7 +21,7 @@ module.exports = class NewspaperProvier {
       return a
     }, {})
 
-    return newspapers
+    return this.newspapers
   }
 
   fetch() {

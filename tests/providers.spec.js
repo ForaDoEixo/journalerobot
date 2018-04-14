@@ -17,6 +17,8 @@ const FAKE_NEWS_SIZE = 20
 describe('Testing all in-source providers', function () {
   it('should load providers from directory', function (done) {
     utils._getProviders().then(providers => {
+      done()
+
       Object.values(providers).map(ProviderClass => {
         let p = new ProviderClass()
 
@@ -40,7 +42,8 @@ describe('Testing all in-source providers', function () {
 
         describe(`test provider ${p.name}`, function () {
           describe('load()', function () {
-            let p = new ProviderClass()
+            let p;
+            beforeEach(() =>  p = new ProviderClass())
 
             it('should load newspapers from data file', function () {
               p.load(cachedNewspapers)
@@ -79,8 +82,6 @@ describe('Testing all in-source providers', function () {
           })
 
           describe('get()', function () {
-            let p = new ProviderClass()
-
             it('should return newspapers from data file', function () {
               p.load(cachedNewspapers)
 
@@ -92,12 +93,10 @@ describe('Testing all in-source providers', function () {
           })
 
           describe('fetch()', function () {
-            let p = new ProviderClass()
-
             this.timeout(TIMEOUT)
 
-            it('should fetch newspapers from the network', function (done) {
-              p.fetch().then(({newspapers}) => {
+            it('should fetch newspapers from the network', function () {
+              return p.fetch().then(({newspapers}) => {
                 let k = Object.keys(newspapers)[0]
                 let n = newspapers[k]
 
@@ -105,25 +104,18 @@ describe('Testing all in-source providers', function () {
                 expect(n.provider).to.be.equal(p.provider)
                 expect(n.name).to.be.equal(k)
                 expect(n.high).to.be.a('string')
-
-                done()
-              })
+              }).then(() => true)
             })
 
-            it('should not load fetched newspapers', function (done) {
-              p.fetch().then((ret) => {
+            it('should not load fetched newspapers', function () {
+              return p.fetch().then((ret) => {
                 expect(p._keys()).to.deep.equal([])
-
-                done()
-              })
+              }).then(() => true)
             })
           })
 
           describe('get10Days()', function () {
-            let p = new ProviderClass()
-
-            this.timeout(TIMEOUT)
-            it('should get latest 10 newspapers for a name', function (done) {
+            it('should get latest 10 newspapers for a name', function () {
               p.load(cachedNewspapers)
 
               let k = p._keys()[0]
@@ -135,28 +127,22 @@ describe('Testing all in-source providers', function () {
               expect(keys.length).to.be.equal(10)
               expect(values[0]).to.be.an('object')
               expect(values[0].high).to.be.a('string')
-
-              done()
             })
           })
 
           describe('filterToday()', function () {
-            let p = new ProviderClass()
+            it('should only list today\'s newspaper', function () {
+              let newspapers = p.load(cachedNewspapers)
 
-            this.timeout(TIMEOUT)
-            it('should only list today\'s newspaper', function (done) {
-              p.fetch().then(({newspapers}) => {
-                let keys = Object.keys(newspapers).splice(10)
-                let today = p.filterToday(keys)
+              let keys = Object.keys(newspapers).splice(10)
+              let today = p.filterToday(keys)
 
-                done()
-              })
+              expect(today).to.be.an('object')
+              expect(Object.keys(today).length).to.equal(keys.length)
             })
           })
         })
       })
     })
-
-    done()
   })
 })

@@ -58,7 +58,7 @@ module.exports = class KioskoProvider extends Provider {
 
             const zoneName = selector[0].children[0].data
 
-            if (zoneName === 'Inicio') {
+            if (zoneName === 'Home') {
               return
             }
 
