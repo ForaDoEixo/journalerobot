@@ -228,7 +228,7 @@ class TapaBot {
       .then((z) => (
         this.doGetCountries(msg, z.name)))
       .catch(e => (
-        this.countriesFuzzy.search(term)
+        debug(e) && this.countriesFuzzy.search(term)
           .then((c) => (
             this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))))
           .catch(e => (
