@@ -151,6 +151,7 @@ module.exports = class KioskoProvider extends Provider {
     for (let i = 0; i < 10; i += 1) {
       let dt = nm.format('YYYY/MM/DD')
       ret[`${newspaper.name} (${dt})`] = {
+        name: newspaper.name,
         country: newspaper.country,
         high: `${this.config.IMG_BASE_URL}/${dt}/${highUrl}`
       }
