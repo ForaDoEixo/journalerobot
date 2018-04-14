@@ -42,8 +42,8 @@ describe('Testing all in-source providers', function () {
 
         describe(`test provider ${p.name}`, function () {
           describe('load()', function () {
-            let p;
-            beforeEach(() =>  p = new ProviderClass())
+            let p
+            beforeEach(() => p = new ProviderClass())
 
             it('should load newspapers from data file', function () {
               p.load(cachedNewspapers)

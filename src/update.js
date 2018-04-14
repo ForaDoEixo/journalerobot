@@ -24,6 +24,7 @@ getProviders(config)
           .reduce((a, c) => (
             Object.assign(a, {
               [c.name]: {
+                [c.history ? 'historyProvider' : 'provider']: p.name,
                 provider: p.name,
                 ...c
               }
