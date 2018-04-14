@@ -13,7 +13,7 @@ module.exports = class NewspaperProvier {
 
   load(newspapers) {
     this.newspapers = Object.values(newspapers).reduce((a, n) => {
-      if (n.provider === this.name) {
+      if (n.provider === this.name || n.historyProvider === this.name) {
         return Object.assign(a, {
           [n.name]: n
         })
@@ -29,11 +29,11 @@ module.exports = class NewspaperProvier {
   }
 
   get10Days() {
-    throw new Error('NOT IMPLEMENTED')
+    return []
   }
 
   filterToday(newspapers) {
-    throw new Error('NOT IMPLEMENTED')
+    return newspapers.map(n => this.newspapers[n])
   }
 
   // for debug purposes only

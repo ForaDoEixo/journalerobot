@@ -76,11 +76,13 @@ module.exports = class KioskoProvider extends Provider {
 
                   $(res.data).find('.thcover img').map((i, e) => {
                     const name = $(e).attr('alt')
+                    const src = $(e).attr('src')
                     newspapers[name] = {
                       name: name,
                       country: countryName,
-                      low: $(e).attr('src'),
-                      high: $(e).attr('src').replace('200', '750')
+                      low: src,
+                      high: src.replace('200', '750'),
+                      history: src.replace('200', '750')
                     }
                   })
 
@@ -137,7 +139,11 @@ module.exports = class KioskoProvider extends Provider {
 
   get10Days(newspaperName) {
     let newspaper = this.get(newspaperName)
-    let [, y, m, d, highUrl] = this.parseImgURL(newspaper.high)
+    if (!newspaper) {
+      return []
+    }
+
+    let [, y, m, d, highUrl] = this.parseImgURL(newspaper.history)
 
     let ret = {}
     let nm = moment(`${y}${m}${d}`)
