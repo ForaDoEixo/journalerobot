@@ -2,10 +2,15 @@ const glob = require('glob')
 const DeepAssign = require('deep-assign')
 const debug = require('debug')('tapa-bot:utils')
 
-function makeRowsKeyboard(keys, transform, rows = 3) {
+function makeRowsKeyboard(keys, transform = (k) => (k), rows = 3) {
+  if (!keys.length) {
+    throw new Error('asked to generate a keyboard with no keys')
+  }
+
   let keyboard = []
-  while (keys.length) {
-    keyboard.push(keys.splice(0, rows).map((k) => ({
+
+  for (let i = 0; i < keys.length; i += rows) {
+    keyboard.push(keys.slice(i, i + rows).map((k) => ({
       text: k,
       callback_data: transform(k)
     })))
@@ -27,6 +32,12 @@ let debugPromise = (name) => (args) => {
   return args
 }
 
+function objectify(a, assign = DeepAssign) {
+  return a.reduce((a, c) => (
+    assign(a, {[`${c.name}`]: c})
+  ), {})
+}
+
 function _getProviders(config) {
   return new Promise((resolve, reject) => {
     glob(`${__dirname}/providers/*.js`, (err, files) => {
@@ -36,28 +47,16 @@ function _getProviders(config) {
 
       debug('providers', files)
 
-      return resolve(files.map(f => (require(require.resolve(f)))))
+      return resolve(files.map(f => (require(f))))
     })
   })
 }
 
 function getProviders(config) {
   return _getProviders(config)
-    .then(providers => (providers.map(P => {
-      let p = new P(config)
-
-      debug(p.name, p.description)
-
-      return {[p.name]: p}
-    }).reduce((a, c) => (
-      Object.assign(a, c)
-    ), {})))
-}
-
-function objectify(a) {
-  return a.reduce((a, c) => (
-    DeepAssign(a, {[`${c.name}`]: c})
-  ), {})
+    .then(debugPromise('getProviders'))
+    .then(providers => (providers.map(P => (new P(config)))))
+    .then(objectify)
 }
 
 module.exports = {
@@ -65,5 +64,5 @@ module.exports = {
   debugPromise,
   getProviders,
   objectify,
-  _getProviders // exported for testing only
+   _getProviders // exported for testing only
 }
