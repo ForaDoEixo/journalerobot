@@ -1,10 +1,10 @@
 const {StringMap} = require('fast-n-fuzzy')
-
-const debug = require('debug')('tapa-bot:search')
+const DebugFactory = require('debug')
 
 class fuzzySearch {
 
   constructor(
+    name,
     items,
     opts,
     resolve = (e) => (e)
@@ -13,12 +13,15 @@ class fuzzySearch {
       maxSearchResults: 3, // used for debug only
       maxDistance: 0.001 // this is set by trial and error
     }, opts)
+    this.name = name
+    this.debug = DebugFactory(`tapa-bot:search:${this.name}  \t`)
+
     this.resolve = resolve
     this.stringMap = this.load(items, opts)
   }
 
   load(items) {
-    debug('new stringMap', this.opts)
+    this.debug('new stringMap', this.opts)
     let stringMap = new StringMap(this.opts)
     this.items = items
     Object.keys(items).map(k => stringMap.add(k.replace(/\s+/g, '_'), k.replace(/\s+/g, '_')))
@@ -32,13 +35,12 @@ class fuzzySearch {
       return Promise.reject(new Error('not found'))
     }
 
-    debug('search', res)
     if (res[0].distance > this.opts.maxDistance) {
-      return Promise.reject(new Error('found with bad distance'))
+      return Promise.reject(new Error(`${this.name}: found with bad distance`))
     }
 
     let k = res[0].value.replace(/_/g, ' ')
-    debug('search', term, res, this.items[k])
+    this.debug('search', term, res, this.items[k])
     return Promise.resolve(this.items[k])
   }
 

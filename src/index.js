@@ -41,13 +41,13 @@ class TapaBot {
     this.token = auth.API_KEY
 
     this.zones = require(FILES.ZONES)
-    this.zonesFuzzy = new FuzzySearch(this.zones)
+    this.zonesFuzzy = new FuzzySearch('zones', this.zones)
 
     this.countries = require(FILES.COUNTRIES)
-    this.countriesFuzzy = new FuzzySearch(this.countries)
+    this.countriesFuzzy = new FuzzySearch('countries', this.countries)
 
     let newspapers = require(FILES.NEWSPAPERS)
-    this.newspapersFuzzy = new FuzzySearch(newspapers, {maxDistance: 0.0001})
+    this.newspapersFuzzy = new FuzzySearch('newspapers', newspapers, {maxDistance: 0.0001})
     this.run.load(newspapers)
 
     this.watcher.on('change', throttle(this.reload.bind(this)))
