@@ -59,10 +59,26 @@ function getProviders(config) {
     .then(objectify)
 }
 
+function throttle(fn, timeout=1000) {
+  let willRun = null
+
+  return function () {
+    if (willRun) {
+      clearTimeout(willRun)
+    }
+
+    willRun = setTimeout(() => {
+      fn.apply(this, arguments)
+      willRun = null
+    }, timeout)
+  }
+}
+
 module.exports = {
   inlineRowsKeyboard,
   debugPromise,
   getProviders,
   objectify,
+  throttle,
    _getProviders // exported for testing only
 }

@@ -149,4 +149,63 @@ describe('main functions', function () {
       })
     })
   })
+
+  describe('throttle', function () {
+    it('should call the throttled function', function (done) {
+      let throttled = utils.throttle(Promise.resolve().then(() => (done())))
+
+      throttled()
+    })
+
+    it('should call the throttled function only once, after 200ms', function (done) {
+      let called = 0
+      let throttled = utils.throttle(() => (called++), 200)
+
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+
+      setTimeout(() => {
+        expect(called).to.be.equal(1)
+        done()
+      }, 300)
+
+    })
+
+    it('should call the throttled function twice, after 200ms', function (done) {
+      let called = 0
+      let throttled = utils.throttle(() => (called++), 200)
+
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+      throttled()
+
+      setTimeout(() => {
+        expect(called).to.be.equal(1)
+
+        throttled()
+        throttled()
+        throttled()
+        throttled()
+        throttled()
+        throttled()
+        throttled()
+
+      }, 300)
+
+      setTimeout(() => {
+        expect(called).to.be.equal(2)
+        done()
+      }, 600)
+    })
+
+  }) 
 })
