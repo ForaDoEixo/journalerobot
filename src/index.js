@@ -224,19 +224,23 @@ class TapaBot {
     const chatId = msg.chat.id
 
     debug('search', term)
-    this.newspapersFuzzy.search(term).then((z) => (
-      this.doGetCountries(msg, z.name))).catch(e => (
-      this.countriesFuzzy.search(term).then((c) => (
-        this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))
-      )).catch(e => (
-        this.zonesFuzzy.search(term).then((n) => (
-          this.sendNewsPapers(chatId, this.run.get10Days(n.name))
-        )).catch(e => {
-          let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
-          debug(msg, e)
-          return this.bot.sendMessage(chatId, msg)
-        })))
-    )).then(debug('all good'))
+    this.zonesFuzzy.search(term)
+      .then((z) => (
+        this.doGetCountries(msg, z.name)))
+      .catch(e => (
+        this.countriesFuzzy.search(term)
+          .then((c) => (
+            this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))))
+          .catch(e => (
+            this.newspapersFuzzy.search(term)
+              .then((n) => (
+                this.sendNewsPapers(chatId, this.run.get10Days(n.name))))
+              .catch(e => {
+                let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
+                debug(msg, e)
+                return this.bot.sendMessage(chatId, msg)
+              })))))
+      .then(debug('all good'))
   }
 
 }
