@@ -34,6 +34,7 @@ module.exports = class NewspaperProvier {
 
   filterToday(newspapers) {
     return newspapers.map(n => this.newspapers[n])
+      .filter(n => n)
   }
 
   // for debug purposes only
