@@ -35,7 +35,6 @@ module.exports = class NewseumProvider extends Provider {
           let image = querystring.escape($('h4 a', t).attr('name'))
           let name = $('h4 a', t).attr('title')
           let [city, country] = $('.thumbnail-group-body p', t).attr('title').split(',  ')
-          // http://cdn.newseum.org/dfp/jpg11/lg/ARG_CLA.jpg
 
           newspapers[name] = {
             name: name,
