@@ -227,19 +227,23 @@ class TapaBot {
     this.zonesFuzzy.search(term)
       .then((z) => (
         this.doGetCountries(msg, z.name)))
-      .catch(e => (
-        debug(e) && this.countriesFuzzy.search(term)
+      .catch(e => {
+        debug('zones', e)
+        return this.countriesFuzzy.search(term)
           .then((c) => (
             this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))))
-          .catch(e => (
-            this.newspapersFuzzy.search(term)
+          .catch(e => {
+            debug('countries', e)
+            return this.newspapersFuzzy.search(term)
               .then((n) => (
                 this.sendNewsPapers(chatId, this.run.get10Days(n.name))))
               .catch(e => {
                 let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
                 debug(msg, e)
                 return this.bot.sendMessage(chatId, msg)
-              })))))
+              })
+          })
+      })
       .then(debug('all good'))
   }
 
