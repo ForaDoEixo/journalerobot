@@ -1,7 +1,7 @@
 #!/bin/sh
 branch=`git branch | grep '*' | awk '{print $2}'`
 git remote update
-if (git log ${branch}...origin/${branch}); then
+if (git log ${branch}...origin/${branch} | grep commit); then
         pid=`cat PIDFILE`
         git pull --rebase
         yarn
