@@ -127,7 +127,7 @@ module.exports = class KioskoProvider extends Provider {
     debug('filterToday', newspapers)
 
     let filtred = newspapers.map(n => this.newspapers[n])
-      .filter(n => n && this.imgURLisToday(n.high, yesterday))
+      .filter(n => n && this.imgURLisToday(n.history, yesterday)) // HACK: should be high, but we don't retain that
 
     if (!yesterday && filtred.length === 0) { // HACK: probably too early, get yesterday
       debug('retry')
