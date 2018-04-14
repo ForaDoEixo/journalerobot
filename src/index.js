@@ -5,7 +5,7 @@ const chokidar = require('chokidar')
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search')
-const {inlineRowsKeyboard, getProviders} = require('./utils')
+const {inlineRowsKeyboard, getProviders, throttle} = require('./utils')
 
 const {FILES, GROUP_MAX_ENTRIES} = require('./config')
 
@@ -50,7 +50,7 @@ class TapaBot {
     this.newspapersFuzzy = new FuzzySearch(newspapers, {maxDistance: 0.0001})
     this.run.load(newspapers)
 
-    this.watcher.on('change', this.reload.bind(this))
+    this.watcher.on('change', throttle(this.reload.bind(this)))
   }
 
   getProviderForNewsPaper(newspaper) {
