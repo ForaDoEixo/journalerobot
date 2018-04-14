@@ -13,6 +13,6 @@ yarn build
 
 if (updated); then
         start-stop-daemon --stop --pidfile PID
-        start-stop-daemon --start -b -m --pidfile PID -d `realpath .` --exec /usr/bin/node index.js
+        start-stop-daemon --start -b -C -m --pidfile PID -d `realpath .` --exec /usr/bin/env DEBUG=tapa-bot* /usr/bin/node index.js
 fi
 
