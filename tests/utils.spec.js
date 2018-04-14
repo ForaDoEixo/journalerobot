@@ -13,7 +13,7 @@ describe('main functions', function () {
     })
 
     it('empty keys() should throw', function () {
-      expect(utils.inlineRowsKeyboard([])).to.throw()
+      expect(() => utils.inlineRowsKeyboard([])).to.throw()
     })
 
     it('2 keys make a 1 row keyboard', function () {
@@ -45,7 +45,7 @@ describe('main functions', function () {
     })
 
     it('6 keys with 2 rows', function () {
-      let keyboard = utils.inlineRowsKeyboard(defaultKeys.slice(0, 6), 2)
+      let keyboard = utils.inlineRowsKeyboard(defaultKeys.slice(0, 6), undefined, 2)
 
       expect(keyboard.reply_markup.inline_keyboard.length).to.equal(3)
       expect(keyboard.reply_markup.inline_keyboard[0].length).to.equal(2)
@@ -54,7 +54,7 @@ describe('main functions', function () {
 
       expect(keyboard.reply_markup.inline_keyboard[0][0].text).to.equal('zero')
       expect(keyboard.reply_markup.inline_keyboard[1][0].text).to.equal('two')
-      expect(keyboard.reply_markup.inline_keyboard[1][0].text).to.equal('four')
+      expect(keyboard.reply_markup.inline_keyboard[2][0].text).to.equal('four')
     })
 
     it('default transform is (k) => (k)', function () {
@@ -66,14 +66,12 @@ describe('main functions', function () {
 
     it('transform is called', function () {
       let transform = function (k) { throw new Error('transform called') }
-      expect(utils.inlineRowsKeyboard(defaultKeys.slice(0, 2), transform = transform)).to.throw()
+      expect(() => utils.inlineRowsKeyboard(defaultKeys.slice(0, 2), transform = transform)).to.throw()
     })
 
     it('transform is applied', function () {
       let transform = (k) => (`got ${k}`)
       let keyboard = utils.inlineRowsKeyboard(defaultKeys.slice(0, 6), transform = transform)
-
-      console.error(keyboard.reply_markup.inline_keyboard)
 
       expect(keyboard.reply_markup.inline_keyboard[0][0].text).to.equal('zero')
       expect(keyboard.reply_markup.inline_keyboard[0][0].callback_data).to.equal('got zero')
@@ -81,34 +79,30 @@ describe('main functions', function () {
   })
 
   describe('debugPromise', function () {
-    it('should return the same value when called in a then', function (done) {
-      Promise.resolve('hello')
-        .then(utils.debugPromise('test'))
-        .then(v => expect(v).to.equal('hello'))
-        .then(v => done())
+    it('should return the same value when called in a then', function () {
+      return Promise.resolve('hello')
+                    .then(utils.debugPromise('test'))
+                    .then(v => expect(v).to.equal('hello'))
     })
   })
 
   describe('getProviders', function () {
-    it('should return the list of providers, as an object', function (done) {
-      utils.getProviders().then((providers) => {
+    it('should return the list of providers, as an object', function () {
+      return utils.getProviders().then((providers) => {
         let keys = Object.keys(providers)
 
-        expect(utils.getProviders()).to.be.an('object')
+        expect(providers).to.be.an('object')
         expect(keys).to.be.an('array')
         expect(keys.length).to.equal(2)
-
-        done()
       })
+
     })
 
-    it('should map keys to provider names', function (done) {
-      utils.getProviders().then((providers) => {
+    it('should map keys to provider names', function () {
+      return utils.getProviders().then((providers) => {
         let keys = Object.keys(providers)
 
-        expect(utils.getProviders()[keys[0]].name).to.equal(keys[0])
-
-        done()
+        expect(providers[keys[0]].name).to.equal(keys[0])
       })
     })
   })
