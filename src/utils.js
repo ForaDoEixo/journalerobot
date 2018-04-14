@@ -38,9 +38,11 @@ function objectify(a, assign = DeepAssign) {
   ), {})
 }
 
-function _getProviders(config) {
+function _getProviders(path = `${__dirname}/providers/*.js`) {
+  debug('path:', path)
+
   return new Promise((resolve, reject) => {
-    glob(`${__dirname}/providers/*.js`, (err, files) => {
+    glob(path, (err, files) => {
       if (err) {
         return reject(err)
       }
@@ -53,13 +55,13 @@ function _getProviders(config) {
 }
 
 function getProviders(config) {
-  return _getProviders(config)
+  return _getProviders.apply(this, Array.prototype.slice.call(arguments, 1))
     .then(debugPromise('getProviders'))
     .then(providers => (providers.map(P => (new P(config)))))
     .then(objectify)
 }
 
-function throttle(fn, timeout=1000) {
+function throttle(fn, timeout = 1000) {
   let willRun = null
 
   return function () {
@@ -80,5 +82,5 @@ module.exports = {
   getProviders,
   objectify,
   throttle,
-   _getProviders // exported for testing only
+  _getProviders // exported for testing only
 }

@@ -1,10 +1,16 @@
 'use strict'
 
 /* eslint-disable no-unused-expressions */
-const { expect } = require('chai')
+const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
 const utils = require('../src/utils')
 
-describe('main functions', function () {
+const {expect} = chai
+
+chai.should()
+chai.use(chaiAsPromised)
+
+describe('utils: main functions', function () {
   describe('inlineRowsKeyboard', function () {
     let defaultKeys
 
@@ -81,8 +87,8 @@ describe('main functions', function () {
   describe('debugPromise', function () {
     it('should return the same value when called in a then', function () {
       return Promise.resolve('hello')
-                    .then(utils.debugPromise('test'))
-                    .then(v => expect(v).to.equal('hello'))
+        .then(utils.debugPromise('test'))
+        .then(v => expect(v).to.equal('hello'))
     })
   })
 
@@ -95,7 +101,10 @@ describe('main functions', function () {
         expect(keys).to.be.an('array')
         expect(keys.length).to.equal(2)
       })
+    })
 
+    it('should error if given a unauthorized path', function () {
+      return utils.getProviders({}, '/root/*').should.be.rejected
     })
 
     it('should map keys to provider names', function () {
@@ -173,7 +182,6 @@ describe('main functions', function () {
         expect(called).to.be.equal(1)
         done()
       }, 300)
-
     })
 
     it('should call the throttled function twice, after 200ms', function (done) {
@@ -198,7 +206,6 @@ describe('main functions', function () {
         throttled()
         throttled()
         throttled()
-
       }, 300)
 
       setTimeout(() => {
@@ -206,6 +213,5 @@ describe('main functions', function () {
         done()
       }, 600)
     })
-
-  }) 
+  })
 })
