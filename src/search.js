@@ -41,7 +41,11 @@ class fuzzySearch {
 
     let k = res[0].value.replace(/_/g, ' ')
     this.debug('search', term, res, this.items[k])
-    return Promise.resolve(this.items[k])
+    return Promise.resolve({
+      name: this.name,
+      result: this.items[k],
+      distance: res[0].distance
+    })
   }
 
 }

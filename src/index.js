@@ -223,28 +223,30 @@ class TapaBot {
 
     const chatId = msg.chat.id
 
-    debug('search', term)
-    this.newspapersFuzzy.search(term)
-      .then((n) => (
-        this.sendNewsPapers(chatId, this.run.get10Days(n.name))))
-      .catch(e => {
-        debug('newspapers', e)
-        return this.countriesFuzzy.search(term)
-          .then((c) => (
-            this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))))
-          .catch(e => {
-            debug('countries', e)
-            return zonesFuzzy.search(term)
-              .then((z) => (
-                this.doGetCountries(msg, z.name)))
-              .catch(e => {
-                let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
-                debug(msg, e)
-                return this.bot.sendMessage(chatId, msg)
-              })
-          })
-      })
-      .then(debug('all good'))
+    let searchActions = {
+      newspapers: (n) => (this.sendNewsPapers(chatId, this.run.get10Days(n.name))),
+      countries: (c) => (this.sendNewsPapers(chatId, this.run.filterToday(c.newspapers))),
+      zones: (z) => (this.doGetCountries(msg, z.name)),
+      notFound: (e) => {
+        let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
+        debug(msg, e)
+        return this.bot.sendMessage(chatId, msg)
+      }
+    }
+
+    let promises = [
+      this.newspapersFuzzy.search(term).catch(e => { distance: 1000 }),
+      this.countriesFuzzy.search(term).catch(e => { distance: 1000 })
+      // FIXME: i don't have any idea why zonesFuzzy doesn't work
+      //      this.zonesFuzzy.search(term).catch(e => {distance: 1000}),
+    ]
+
+    Promise.all(promises)
+      .then((results) => (
+        results.reduce((a, c) => (
+          c.distance < a.distance ? c : a
+        ), {name: 'notFound', distance: 100})
+      )).then(r => searchActions[r.name](r.result))
   }
 
 }
