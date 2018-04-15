@@ -44,7 +44,7 @@ just run `yarn build` it will update that collection with the latest info.
 
 it's recomended to setup a cron file like this to auto-update every 15 mins:
 ```sh
-0 * * * * (cd ~/tapabot && sh update.sh)
+0  * * * * (cd ~/tapabot && sh update.sh)
 15 * * * * (cd ~/tapabot && sh update.sh)
 30 * * * * (cd ~/tapabot && sh update.sh)
 45 * * * * (cd ~/tapabot && sh update.sh)
