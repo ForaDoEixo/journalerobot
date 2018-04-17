@@ -5,7 +5,7 @@ const chokidar = require('chokidar')
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search')
-const {inlineRowsKeyboard, getProviders, throttle} = require('./utils')
+const {inlineRowsKeyboard, getProviders, debugPromise, throttle} = require('./utils')
 
 const {FILES, GROUP_MAX_ENTRIES} = require('./config')
 
