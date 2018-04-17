@@ -193,8 +193,7 @@ class TapaBot {
     const chatId = msg.chat.id
 
     if (!term) {
-      this.bot.sendMessage(chatId, `hey ${userName}, i need a term`)
-      return this.bot.sendMessage(chatId, this.usage())
+      return this.bot.sendMessage(chatId, `hey ${userName}, i need a term`)
     }
 
     this.countriesFuzzy.search(term)
@@ -206,8 +205,7 @@ class TapaBot {
       })
       .catch(e => {
         debug(e)
-        this.bot.sendMessage(chatId, 'wrong country, try again')
-        return this.bot.sendMessage(chatId, this.usage())
+        return this.bot.sendMessage(chatId, 'wrong country, try again')
       })
   }
 
