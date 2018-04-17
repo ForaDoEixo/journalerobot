@@ -150,13 +150,13 @@ class TapaBot {
 
   doGetCountries(msg, match) {
     this.zonesFuzzy.search(match[1])
-      .then(zone => {
+      .then(search => {
         const chatId = msg.chat.id
         let user = msg.from.first_name
 
-        debug(zone)
+        debug(search)
         let keyboard = inlineRowsKeyboard(
-          zone.countries, (c) => (`getCountry ${c}`))
+          search.result.countries, (c) => (`getCountry ${c}`))
 
         return this.bot.sendMessage(
           chatId, `Ok ${user}, choose a country`, keyboard)
@@ -199,8 +199,8 @@ class TapaBot {
 
     this.countriesFuzzy.search(term)
     // .then(debugPromise('countryFuzzy'))
-      .then(country => {
-        let today = this.run.filterToday(country.newspapers)
+      .then(search => {
+        let today = this.run.filterToday(search.result.newspapers)
         debug(today)
         return this.sendNewsPapers(chatId, today)
       })
