@@ -179,11 +179,12 @@ describe('utils: main functions', function () {
       q.schedule(() => update())
       q.schedule(() => update())
 
-      setTimeout(() => {expect(called).to.equal(2)}, 1200)
-      setTimeout(() => {expect(called).to.equal(3)}, 2200)
-      setTimeout(() => {expect(called).to.equal(4)}, 3200)
-      setTimeout(() => {expect(called).to.equal(5)}, 4200)
-      setTimeout(() => {expect(called).to.equal(6); done();
+      setTimeout(() => { expect(called).to.equal(2) }, 1200)
+      setTimeout(() => { expect(called).to.equal(3) }, 2200)
+      setTimeout(() => { expect(called).to.equal(4) }, 3200)
+      setTimeout(() => { expect(called).to.equal(5) }, 4200)
+      setTimeout(() => {
+        expect(called).to.equal(6); done()
       }, 5200)
     })
   })

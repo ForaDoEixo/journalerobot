@@ -154,7 +154,7 @@ class TapaBot {
 /zones
 /countries Zone
 /newspapers Zone/Country
-`
+    `
   }
 
   doGetZones(msg) {
@@ -186,9 +186,9 @@ class TapaBot {
   }
 
   sendNewsPapers(chatId, newspapers) {
-    debug('here', newspapers)
     let values = Object.values(newspapers)
     let i = 0
+
     do {
       let images = values.splice(i, i + GROUP_MAX_ENTRIES).map((v) => {
         return {
@@ -197,7 +197,7 @@ class TapaBot {
           caption: `${v.country}: ${v.name}`
         }
       })
-      debug('entries', images)
+      debug('sending media Group', images)
 
       this.bot._sendMediaGroup(chatId, images)
       i += GROUP_MAX_ENTRIES

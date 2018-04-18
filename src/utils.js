@@ -95,8 +95,8 @@ class RateLimit {
       }, this.delay)
     })
   }
-}
 
+}
 
 module.exports = {
   inlineRowsKeyboard,
