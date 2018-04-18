@@ -181,23 +181,19 @@ class TapaBot {
 
   sendNewsPapers(chatId, newspapers) {
     let values = Object.values(newspapers)
-    let i = 0
+    values.map(v => {
+      let date = v.date ? ` (${v.date})` : ''
 
-    do {
-      let images = values.splice(i, i + GROUP_MAX_ENTRIES).map((v) => {
-        let date = v.date ? ` (${v.date})` : ''
+      return {
+        type: 'photo',
+        media: v.high,
+        caption: `${v.country}: ${v.name}${date}`
+      }
+    })
 
-        return {
-          type: 'photo',
-          media: v.high,
-          caption: `${v.country}: ${v.name}${date}`
-        }
-      })
-      debug('sending media Group', images)
-
-      this.bot._sendMediaGroup(chatId, images)
-      i += GROUP_MAX_ENTRIES
-    } while (i < values.length)
+    return utils.splitCall(values, GROUP_MAX_ENTRIES, (i) => (
+      this.bot._sendMediaGroup(chatId, i)
+    ))
   }
 
   doGetAllForCountry(msg, match) {
