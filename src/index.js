@@ -191,10 +191,12 @@ class TapaBot {
 
     do {
       let images = values.splice(i, i + GROUP_MAX_ENTRIES).map((v) => {
+        let date = v.date ? ` (${v.date})` : ''
+
         return {
           type: 'photo',
           media: v.high,
-          caption: `${v.country}: ${v.name}`
+          caption: `${v.country}: ${v.name}${date}`
         }
       })
       debug('sending media Group', images)
