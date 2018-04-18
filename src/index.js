@@ -180,8 +180,7 @@ class TapaBot {
   }
 
   sendNewsPapers(chatId, newspapers) {
-    let values = Object.values(newspapers)
-    values.map(v => {
+    let values = Object.values(newspapers).map(v => {
       let date = v.date ? ` (${v.date})` : ''
 
       return {
