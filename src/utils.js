@@ -80,11 +80,12 @@ function throttle(fn, timeout = 1000) {
 }
 
 class RateLimit {
-  constructor(delay) {
+
+  constructor(delay = config.API_RATE_LIMIT) {
     this.delay = delay
     this.q = Q.queue(1)
 
-    debug ("starting, delay", delay)
+    debug('starting, delay', delay)
   }
 
   schedule(work) {
