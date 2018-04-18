@@ -5,7 +5,13 @@ const chokidar = require('chokidar')
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search')
-const {inlineRowsKeyboard, getProviders, debugPromise, throttle} = require('./utils')
+const {
+  inlineRowsKeyboard,
+  getProviders,
+  debugPromise,
+  throttle,
+  RateLimit
+} = require('./utils')
 
 const {FILES, GROUP_MAX_ENTRIES} = require('./config')
 
@@ -84,6 +90,18 @@ class TapaBot {
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true})
 
+    let rl = new RateLimit()
+    this.bot._sendMessage = (id, msg) => {
+      rl.schedule(() => (
+        this.bot.sendMessage(id, msg).catch((e, a) => debug(e, a))
+      ))
+    }
+    this.bot._sendMediaGroup = (id, media) => {
+      rl.schedule(() => (
+        this.bot.sendMediaGroup(id, media).catch((e, a) => debug(e, a))
+      ))
+    }
+
     this.bot.on('callback_query', (cbq) => {
       const [, action, args] = cbq.data.match(/(\w+) ?(.*)/)
       const msg = cbq.message
@@ -108,7 +126,7 @@ class TapaBot {
 
         meRegExps.forEach(r => {
           if (msg.text.match(r)) {
-            this.bot.sendMessage(chatId, 'yes please')
+            this.bot._sendMessage(chatId, 'yes please')
           }
         })
 
@@ -145,7 +163,7 @@ class TapaBot {
 
     let keyboard = inlineRowsKeyboard(Object.keys(this.zones), (z) => (`countries ${z}`))
 
-    this.bot.sendMessage(chatId, `Ok ${user}, choose a zone`, keyboard)
+    this.bot._sendMessage(chatId, `Ok ${user}, choose a zone`, keyboard)
   }
 
   doGetCountries(msg, match) {
@@ -158,7 +176,7 @@ class TapaBot {
         let keyboard = inlineRowsKeyboard(
           search.result.countries, (c) => (`getCountry ${c}`))
 
-        return this.bot.sendMessage(
+        return this.bot._sendMessage(
           chatId, `Ok ${user}, choose a country`, keyboard)
       })
   }
@@ -181,7 +199,7 @@ class TapaBot {
       })
       debug('entries', images)
 
-      this.bot.sendMediaGroup(chatId, images)
+      this.bot._sendMediaGroup(chatId, images)
       i += GROUP_MAX_ENTRIES
     } while (i < values.length)
   }
@@ -193,7 +211,7 @@ class TapaBot {
     const chatId = msg.chat.id
 
     if (!term) {
-      return this.bot.sendMessage(chatId, `hey ${userName}, i need a term`)
+      return this.bot._sendMessage(chatId, `hey ${userName}, i need a term`)
     }
 
     this.countriesFuzzy.search(term)
@@ -205,7 +223,7 @@ class TapaBot {
       })
       .catch(e => {
         debug(e)
-        return this.bot.sendMessage(chatId, 'wrong country, try again')
+        return this.bot._sendMessage(chatId, 'wrong country, try again')
       })
   }
 
@@ -228,7 +246,7 @@ class TapaBot {
       notFound: (e) => {
         let msg = `couldn't find \`${term}\` in newspapers, countries or zones`
         debug(msg, e)
-        return this.bot.sendMessage(chatId, msg)
+        return this.bot._sendMessage(chatId, msg)
       }
     }
 
