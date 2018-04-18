@@ -5,13 +5,7 @@ const chokidar = require('chokidar')
 const debug = require('debug')('tapa-bot')
 
 const FuzzySearch = require('./search')
-const {
-  inlineRowsKeyboard,
-  getProviders,
-  debugPromise,
-  throttle,
-  RateLimit
-} = require('./utils')
+const utils = require('./utils')
 
 const {FILES, GROUP_MAX_ENTRIES} = require('./config')
 
@@ -56,7 +50,7 @@ class TapaBot {
     this.newspapersFuzzy = new FuzzySearch('newspapers', newspapers, {maxDistance: 0.0001})
     this.run.load(newspapers)
 
-    this.watcher.on('change', throttle(this.reload.bind(this)))
+    this.watcher.on('change', utils.throttle(this.reload.bind(this)))
   }
 
   getProviderForNewsPaper(newspaper) {
@@ -78,7 +72,7 @@ class TapaBot {
   }
 
   start() {
-    return getProviders()
+    return utils.getProviders()
       .then((providers) => {
         this.providers = providers
       })
@@ -90,7 +84,7 @@ class TapaBot {
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true})
 
-    let rl = new RateLimit()
+    let rl = new utils.RateLimit()
     this.bot._sendMessage = (id, msg, keyboard) => {
       rl.schedule(() => (
         this.bot.sendMessage(id, msg, keyboard).catch((e, a) => debug(e, a))
@@ -161,7 +155,7 @@ class TapaBot {
     const chatId = msg.chat.id
     let user = msg.from.first_name
 
-    let keyboard = inlineRowsKeyboard(Object.keys(this.zones), (z) => (`countries ${z}`))
+    let keyboard = utils.inlineRowsKeyboard(Object.keys(this.zones), (z) => (`countries ${z}`))
 
     this.bot._sendMessage(chatId, `Ok ${user}, choose a zone`, keyboard)
   }
@@ -173,7 +167,7 @@ class TapaBot {
         let user = msg.from.first_name
 
         debug(search)
-        let keyboard = inlineRowsKeyboard(
+        let keyboard = utils.inlineRowsKeyboard(
           search.result.countries, (c) => (`getCountry ${c}`))
 
         return this.bot._sendMessage(
@@ -217,7 +211,7 @@ class TapaBot {
     }
 
     this.countriesFuzzy.search(term)
-    // .then(debugPromise('countryFuzzy'))
+    // .then(utils.debugPromise('countryFuzzy'))
       .then(search => {
         let today = this.run.filterToday(search.result.newspapers)
         debug(today)
