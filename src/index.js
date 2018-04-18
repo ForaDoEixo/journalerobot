@@ -91,9 +91,9 @@ class TapaBot {
     this.bot = new TelegramBot(this.token, {polling: true})
 
     let rl = new RateLimit()
-    this.bot._sendMessage = (id, msg) => {
+    this.bot._sendMessage = (id, msg, keyboard) => {
       rl.schedule(() => (
-        this.bot.sendMessage(id, msg).catch((e, a) => debug(e, a))
+        this.bot.sendMessage(id, msg, keyboard).catch((e, a) => debug(e, a))
       ))
     }
     this.bot._sendMediaGroup = (id, media) => {
