@@ -243,5 +243,19 @@ describe('utils: main functions', function () {
         done()
       }, 600)
     })
+
+    describe('splitCall', function () {
+      it('should split an array into smaller chunks', function () {
+        let a = Array.from('abcdefghijklmnopqrstuvwxyz')
+
+        let count = 0
+        utils.splitCall(a, 3, (items) => {
+          expect(items).to.be.length(3)
+          count += 1
+        })
+
+        expect(count).to.equal(Math.floor((a.length)/3))
+      })
+    })
   })
 })

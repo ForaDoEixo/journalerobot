@@ -96,7 +96,17 @@ class RateLimit {
       }, this.delay)
     })
   }
+}
 
+function splitCall(values, n, cb) {
+  let a = values.slice(0, values.length)
+  let i = 0
+  do {
+    let ret = a.splice(0, n)
+    cb(ret)
+
+    i += n
+  } while (n < a.length)
 }
 
 module.exports = {
@@ -106,5 +116,6 @@ module.exports = {
   objectify,
   throttle,
   RateLimit,
+  splitCall,
   _getProviders // exported for testing only
 }
