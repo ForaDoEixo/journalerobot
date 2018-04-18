@@ -4,6 +4,7 @@
 const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const utils = require('../src/utils')
+const debug = require('debug')('tapa-bot:test:utils')
 
 const {expect} = chai
 
@@ -156,6 +157,34 @@ describe('utils: main functions', function () {
         one: {name: 'one', deep: {value: 'one', pt: 'un'}},
         two: {name: 'two', deep: {value: 'dos'}}
       })
+    })
+  })
+
+  describe('rateLimit', function () {
+    it('should only call the function every interval', function (done) {
+      this.timeout(6000)
+
+      let called = 0
+      function update() {
+        called = called + 1
+        debug('work done', called)
+      }
+
+      let q = new utils.RateLimit(1000)
+
+      q.schedule(() => update())
+      q.schedule(() => update())
+      q.schedule(() => update())
+      q.schedule(() => update())
+      q.schedule(() => update())
+      q.schedule(() => update())
+
+      setTimeout(() => {expect(called).to.equal(2)}, 1200)
+      setTimeout(() => {expect(called).to.equal(3)}, 2200)
+      setTimeout(() => {expect(called).to.equal(4)}, 3200)
+      setTimeout(() => {expect(called).to.equal(5)}, 4200)
+      setTimeout(() => {expect(called).to.equal(6); done();
+      }, 5200)
     })
   })
 

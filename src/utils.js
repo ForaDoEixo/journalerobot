@@ -1,6 +1,9 @@
 const glob = require('glob')
 const DeepAssign = require('deep-assign')
 const debug = require('debug')('tapa-bot:utils')
+const Q = require('d3-queue')
+
+const config = require('./config')
 
 function makeRowsKeyboard(keys, transform = (k) => (k), rows = 3) {
   if (!keys.length) {
@@ -76,11 +79,31 @@ function throttle(fn, timeout = 1000) {
   }
 }
 
+class RateLimit {
+  constructor(delay) {
+    this.delay = delay
+    this.q = Q.queue(1)
+
+    debug ("starting, delay", delay)
+  }
+
+  schedule(work) {
+    this.q.defer((cb) => {
+      work()
+      setTimeout(() => {
+        cb(null)
+      }, this.delay)
+    })
+  }
+}
+
+
 module.exports = {
   inlineRowsKeyboard,
   debugPromise,
   getProviders,
   objectify,
   throttle,
+  RateLimit,
   _getProviders // exported for testing only
 }

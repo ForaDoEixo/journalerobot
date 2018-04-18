@@ -15,6 +15,7 @@
   "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls",
   "dependencies": {
     "chokidar": "^2.0.3",
+    "d3-queue": "^3.0.7",
     "debug": "^3.1.0",
     "deep-assign": "^2.0.0",
     "fast-n-fuzzy": "xaiki/fast-n-fuzzy",
