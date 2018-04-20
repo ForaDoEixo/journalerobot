@@ -242,8 +242,8 @@ class TapaBot {
     }
 
     let promises = [
-      this.newspapersFuzzy.search(term).catch(e => { distance: 1000 }),
-      this.countriesFuzzy.search(term).catch(e => { distance: 1000 })
+      this.newspapersFuzzy.search(term).catch(e => ({ distance: 1000 })),
+      this.countriesFuzzy.search(term).catch(e => ({ distance: 1000 }))
       // FIXME: i don't have any idea why zonesFuzzy doesn't work
       //      this.zonesFuzzy.search(term).catch(e => {distance: 1000}),
     ]
