@@ -7,7 +7,7 @@ const debug = require('debug')('tapa-bot')
 const FuzzySearch = require('./search')
 const utils = require('./utils')
 
-const {FILES, GROUP_MAX_ENTRIES} = require('./config')
+const {FILES, GROUP_MAX_ENTRIES, API_RATE_LIMIT} = require('./config')
 
 class TapaBot {
 
@@ -84,7 +84,7 @@ class TapaBot {
     // Create a bot that uses 'polling' to fetch new updates
     this.bot = new TelegramBot(this.token, {polling: true})
 
-    let rl = new utils.RateLimit()
+    let rl = new utils.RateLimit(API_RATE_LIMIT)
     this.bot._sendMessage = (id, msg, keyboard) => {
       rl.schedule(() => (
         this.bot.sendMessage(id, msg, keyboard).catch((e, a) => debug(e, a))
