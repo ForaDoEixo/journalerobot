@@ -254,7 +254,7 @@ describe('utils: main functions', function () {
           count += 1
         })
 
-        expect(count).to.equal(Math.floor((a.length)/3))
+        expect(count).to.equal(Math.floor((a.length) / 3))
       })
     })
   })

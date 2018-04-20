@@ -96,6 +96,7 @@ class RateLimit {
       }, this.delay)
     })
   }
+
 }
 
 function splitCall(values, n, cb) {

@@ -38,12 +38,12 @@ describe('search', function () {
     f.load(itemify(keys.slice(10)))
 
     let s = 'xxxx'
-    return  f.search(s)
-             .then(r => {
-               expect(r).to.be.an('object')
-               expect(r.result).to.equal('x')
-               expect(r.distance).to.equal(0)
-             })
+    return f.search(s)
+      .then(r => {
+        expect(r).to.be.an('object')
+        expect(r.result).to.equal('x')
+        expect(r.distance).to.equal(0)
+      })
   })
   describe('search', function () {
     let f = new FuzzySearch('test', itemify(keys.slice(0, 10)))
@@ -51,29 +51,29 @@ describe('search', function () {
     it('should return exact match with 0 distance', function () {
       let s = 'cccc'
 
-      return  f.search(s)
-               .then(r => {
-                 expect(r).to.be.an('object')
-                 expect(r.result).to.equal('c')
-                 expect(r.distance).to.equal(0)
-               })
+      return f.search(s)
+        .then(r => {
+          expect(r).to.be.an('object')
+          expect(r.result).to.equal('c')
+          expect(r.distance).to.equal(0)
+        })
     })
     it('should return match', function () {
       let s = 'ccc'
 
-      return  f.search(s)
-               .then(r => {
-                 expect(r).to.be.an('object')
-                 expect(r.result).to.equal('c')
-                 expect(r.distance).is.below(0.01)
-               })
+      return f.search(s)
+        .then(r => {
+          expect(r).to.be.an('object')
+          expect(r.result).to.equal('c')
+          expect(r.distance).is.below(0.01)
+        })
     })
 
     it('should throw if no match', function (done) {
       let s = 'xxx'
 
       f.search(s)
-       .catch(e => done())
+        .catch(e => done())
     })
   })
 })
